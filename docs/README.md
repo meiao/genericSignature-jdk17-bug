@@ -64,3 +64,10 @@ Inside `VM_RedefineClasses::rewrite_cp_refs` the explanation to what happens bet
 2031    }
 ...
 ```
+
+
+It looks like `VM_RedefineClasses::rewrite_cp_refs` writes the `generic_signature_index` into `scratch_cp` (the cp inside `scratch_class`) to be correct index of the generic signature for the constant pool that will be put into `scratch_class`.
+
+Then `merge_cp` is passed into `VM_RedefineClasses::set_new_constant_pool` as `scratch_cp`. A new constant pool is created (`smaller_cp`), the constants from the "new" `scratch_cp` are put in it, along with its `generic_signature_index` which is not the value updated in `VM_RedefineClasses::rewrite_cp_refs`.
+
+Looks like there is some confusion with the names here and the `generic_signature_index` that was updated in `VM_RedefineClasses::rewrite_cp_refs` gets lost.
