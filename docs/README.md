@@ -71,3 +71,26 @@ It looks like `VM_RedefineClasses::rewrite_cp_refs` writes the `generic_signatur
 Then `merge_cp` is passed into `VM_RedefineClasses::set_new_constant_pool` as `scratch_cp`. A new constant pool is created (`smaller_cp`), the constants from the "new" `scratch_cp` are put in it, along with its `generic_signature_index` which is not the value updated in `VM_RedefineClasses::rewrite_cp_refs`.
 
 Looks like there is some confusion with the names here and the `generic_signature_index` that was updated in `VM_RedefineClasses::rewrite_cp_refs` gets lost.
+
+
+# Possible solution
+
+Inside `VM_RedefineClasses::merge_cp_and_rewrite`, the `scratch_cp` (inside scratch_class), has its fields updated to reference the items in the final constant pool during the call to `VM_RedefineClasses::rewrite_cp_refs`.
+
+Just after that, there is a call to `VM_RedefineClasses::set_new_constant_pool` in which `merge_cp` is passed as a parameter named `scratch_cp`. Inside this method, the final constant pool is created (`smaller_cp`) and there is a call to populate its fields.
+
+```
+smaller_cp->copy_fields(scratch_cp);
+```
+
+but remember that inside `VM_RedefineClasses::set_new_constant_pool`, `scratch_cp` is `merge_cp` from the calling method and does not have the updated fields. So changing this line to
+
+```
+smaller_cp->copy_fields(scratch_class->constants());
+```
+
+copies the right fields to `smaller_cp`.
+
+This has not been thoroughly tested, but does fix the problem we are seeing. It also does not make the code any less confusing. Renaming `scratch_cp` inside `VM_RedefineClasses::set_new_constant_pool` might make things a little clearer. Another possible fix is to update the fields in `merge_cp` instead of `scratch_cp` (in `VM_RedefineClasses::rewrite_cp_refs`).
+
+I don't have a holistic view of everything going on, so this may be completely off.
