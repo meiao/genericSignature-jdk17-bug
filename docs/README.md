@@ -21,7 +21,7 @@ Further comparing the bytecodes, the only differences are the order of the items
 
 Since the bytecode did not provide any clue, the next step was to debug the JVM itself.
 
-`ClassFileParser::apply_parsed_class_attributes` is called twice for `CompletableFuture`. Once before instrumentation and once after. And in both cases, the `_generic_signature_index` is correct.
+`ClassFileParser::apply_parsed_class_attributes` is called twice for `CompletableFuture`. Once before instrumentation and once after. And in both cases, the `_generic_signature_index` is correct relative to the bytecode being read.
 
 Following the execution to `VM_RedefineClasses::merge_cp_and_rewrite`:
 ```c++
@@ -48,7 +48,7 @@ At point B, `scratch_class->generic_signature()` is wrong, its value changes wit
 
 At point C, `scratch_class->generic_signature()` is the value observed at runtime and `generic_signature_index` is 4. Also `scratch_class->constants()->symbol_at(1019)` has the correct generic signature.
 
-Note that 1019 is the index for the generic signature in the original bytecode and 4 is the index for the generic signature in the instrumented bytecode.
+~Note that 1019 is the index for the generic signature in the original bytecode and 4 is the index for the generic signature in the instrumented bytecode.~ (This is likely not relevant as explained later.)
 
 Inside `VM_RedefineClasses::rewrite_cp_refs` the explanation to what happens between points A and B.
 ```
@@ -68,12 +68,12 @@ Inside `VM_RedefineClasses::rewrite_cp_refs` the explanation to what happens bet
 
 It looks like `VM_RedefineClasses::rewrite_cp_refs` writes the `generic_signature_index` into `scratch_cp` (the cp inside `scratch_class`) to be correct index of the generic signature for the constant pool that will be put into `scratch_class`.
 
-Then `merge_cp` is passed into `VM_RedefineClasses::set_new_constant_pool` as `scratch_cp`. A new constant pool is created (`smaller_cp`), the constants from the "new" `scratch_cp` are put in it, along with its `generic_signature_index` which is not the value updated in `VM_RedefineClasses::rewrite_cp_refs`.
+~Then `merge_cp` is passed into `VM_RedefineClasses::set_new_constant_pool` as `scratch_cp`. A new constant pool is created (`smaller_cp`), the constants from the "new" `scratch_cp` are put in it, along with its `generic_signature_index` which is not the value updated in `VM_RedefineClasses::rewrite_cp_refs`.~
 
-Looks like there is some confusion with the names here and the `generic_signature_index` that was updated in `VM_RedefineClasses::rewrite_cp_refs` gets lost.
+~Looks like there is some confusion with the names here and the `generic_signature_index` that was updated in `VM_RedefineClasses::rewrite_cp_refs` gets lost.~
 
 
-# Possible solution
+# Possible explanation/solution
 
 Inside `VM_RedefineClasses::merge_cp_and_rewrite`, the `scratch_cp` (inside scratch_class), has its fields updated to reference the items in the final constant pool during the call to `VM_RedefineClasses::rewrite_cp_refs`.
 
