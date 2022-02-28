@@ -11,4 +11,5 @@ fi
 
 javac src/Tester.java -d out
 
+# To run with Java 18, add: -Dnewrelic.config.experimental_runtime=true
 java -javaagent:./resources/newrelic.jar -cp ./out --add-opens=java.base/java.lang=ALL-UNNAMED Tester
