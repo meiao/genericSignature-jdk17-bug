@@ -15,3 +15,5 @@ We are working to create a smaller reproducing app that does not require the New
 Run `./run.sh`
 
 This script will download the New Relic's Java agent, compile the Tester class and run it.
+
+To run with Java 18+, check the script and add `-Dnewrelic.config.experimental_runtime=true` to the java command.
