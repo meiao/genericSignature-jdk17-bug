@@ -3,6 +3,9 @@ A small application to reproduce a problem in Java 17 with generic signature.
 
 The bug demonstrated by this repo was accepted and has been fixed. See https://bugs.openjdk.java.net/browse/JDK-8282241 for details.
 
+## Fixed in 17.0.5
+On Oct 18 Java 17.0.5 was released with the fix for the bug that caused this.
+
 ## Background
 At New Relic we instrument classes to send telemetry data to our servers. We use ASM for bytecode manipulation.
 
